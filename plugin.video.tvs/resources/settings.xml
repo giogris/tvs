@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<settings>
+	<category label=”General”>
+		<setting id="streaming_protocol" type="labelenum" label="30200" default="http" values="http|upd" />
+		<setting id="streaming_ip" type="ipaddress" label="30201" default="127.0.0.1" />
+		<setting id="streaming_port" type="number" label="30202" default="9000" />
+		<setting type="sep" />
+		<setting id="command_ip" type="ipaddress" label="30203" default="127.0.0.1" />
+		<setting id="command_pass" type="text" label="30204" default="admin" option="hidden" />
+	</category>
+	<category label=”Recording”>
+		<setting id="rec_path" type="folder" label="30210" default="" />
+		<setting type="sep" />
+	</category>
+	<category label=”EPG”>
+		<setting id="epg_days_period" type="number" label="30211" default="5" />
+		<setting type="sep" />
+	</category>
+</settings>

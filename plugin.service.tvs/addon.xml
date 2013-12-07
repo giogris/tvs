@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.service.tvs" name="TV Script Streaming Service" version="1.0.0" provider-name="giogris">
+  <requires>
+  	<import addon="xbmc.python" version="2.1.0"/>
+    <import addon='plugin.module.tvs' version='1.0.0'/>
+  </requires>
+  <extension point='xbmc.service' library="tvs.py" start="startup"/>
+  <extension point="xbmc.addon.metadata">
+    <summary>Tv Script Streaming Service</summary>
+    <summary lang="it">Tv Script DVB-T Streaming Service</summary>
+    <summary lang="en">Tv Script DVB-T Streaming Service</summary>
+    <description lang="it">
+   		TVS TV Script è un semplice add-on XBMC per sintonizzare e vedere i 
+   		programmi delle TV digitale.
+        E' basato sulla nota piattaforma di streaming VLC (http://www.videolan.org)
+    </description>
+    <description lang="en">
+		TVS TV Script it's a simple addon script for digital TV.
+    	It is based on the well known VLC (http://www.videolan.org)
+    </description>
+    <disclaimer lang="it">Per maggiori informazioni consultare il sito internet....</disclaimer>
+    <disclaimer lang="en">For more informations go to the web site....</disclaimer>
+    <platform>linux</platform>
+    <language>it</language>
+    <source>https://github.com/giogris/tvs/plugin.service.tvs</source>
+  </extension>
+</addon>

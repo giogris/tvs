@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<strings>
+  <string id="30000">TV Script Streaming Service</string>
+  <!-- start program lables !-->
+  <string id="30100">No adapters found!</string>
+  <string id="30101">Unable to create TVS data directory:</string>
+  <string id="30102">Unable to create TVS data base:</string>
+  <string id="30102">Unable to register adapters into TVS data base:</string>
+  <!-- settings lables !-->
+
+</strings>

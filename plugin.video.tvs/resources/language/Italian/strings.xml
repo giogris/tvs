@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<strings>
+  <string id="30000">TV Script</string>
+  <!-- start program lables !-->
+  <string id="30100">Nessuna scheda TV!</string>
+  <string id="30101">Canali</string>
+  <string id="30102">Guida TV</string>
+  <string id="30103">Registrazioni</string>
+  <string id="30104">Impostazioni</string>
+  <string id="30105">Confermi la sintonizzazione?</string>
+  <string id="30106">Operazioni di sintonizzazione fallite!</string>
+  <string id="30107">Sintonizzazione scheda</string>  
+  <string id="30108">Scansione frequenze %s</string>
+  <string id="30109">Tempo trascorso     %s</string>
+  <string id="30110">%d canali trovati</string>
+  <string id="30111">Scansione servizi %s</string>
+  <string id="30112">%d frequenze trovate</string>
+  <string id="30113">Sintonizzazione</string>
+  <string id="30114">Programmazione %s</string>
+  <string id="30115">Registra %s</string>
+  <string id="30116">Elimina %s</string>
+  <string id="30117">Confermi l'eliminazione del canale?</string>
+  <!-- settings lables !-->
+  <string id="30200">Protocollo streaming server</string>
+  <string id="30201">IP streaming server</string>
+  <string id="30202">Porta streaming server</string>
+  <string id="30203">IP controllo VLC</string>
+  <string id="30204">Password controllo VLC</string>
+  <string id="30210">Percorso registrazioni</string>
+  <string id="30211">Periodo acquisizione guida TV (giorni)</string>
+</strings>

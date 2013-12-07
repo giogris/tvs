@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<strings>
+  <string id="30000">TV Script</string>
+  <!-- start program lables !-->
+  <string id="30100">No adapters found!</string>
+  <string id="30101">Channels</string>
+  <string id="30102">Electronic Program Guide</string>
+  <string id="30103">Records</string>
+  <string id="30104">Settings</string>
+  <string id="30105">Confirm adapter tuning?</string>
+  <string id="30106">Adapter tuning operations failed!</string>
+  <string id="30107">Tuning adapter</string>  
+  <string id="30108">Scan for frequencies %s</string>
+  <string id="30109">Time elapsed     %s</string>
+  <string id="30110">%d channels found</string>
+  <string id="30111">Scan for services %s</string>
+  <string id="30112">%d frequencies found</string>
+  <string id="30113">Tuning</string>
+  <string id="30114">%s EPG</string>
+  <string id="30115">%s start recording now</string>
+  <string id="30116">Delete %s</string>
+  <string id="30117">Confirm channel delete?</string>
+  <!-- settings lables !-->
+  <string id="30200">Streaming Protocol</string>
+  <string id="30201">Streaming IP</string>
+  <string id="30202">Streaming Port</string>
+  <string id="30203">VLC Control IP</string>
+  <string id="30204">VLC Control Password</string>
+  <string id="30210">Recording path</string>
+  <string id="30211">EPG period (days)</string>
+
+</strings>

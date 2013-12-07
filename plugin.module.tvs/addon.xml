@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.module.tvs" name="TV Script Library Module" version="1.0.0" provider-name="giogris">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+  </requires>
+  <extension point="xbmc.python.module" library="lib" />
+  <extension point="xbmc.addon.metadata">
+    <platform>linux</platform>
+    <language>it</language>
+    <source>https://github.com/giogris/tvs/plugin.module.tvs</source>
+  </extension>
+</addon>
