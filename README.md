@@ -1,4 +1,4 @@
-# tvs
+![tvs](./plugin.video.tvs/icon_128x128.png)
 
 TV Script, another PVR add-on for XBMC
 
