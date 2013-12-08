@@ -13,7 +13,7 @@ TVS is made by two parts:
 ## Requirements
 
 supported platform:   
-linux  
+[linux](http://www.linux.org/)  
 
 additional software:  
 [vlc](http://www.videolan.org/vlc/),   
