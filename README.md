@@ -5,6 +5,7 @@ TV Script, another PVR add-on for [XBMC](http://xbmc.org/)
 
 ## Description
 TVS is an addon for XBMC multimedia platform.  
+  
 TVS is made by two parts:  
 * a streaming service (vlc)  
 * an XBMC video addon  
