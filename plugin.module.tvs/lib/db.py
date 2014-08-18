@@ -40,13 +40,13 @@ databasefile = os.path.join(datadir,'tvs.db')
 
 EPGTIMESTAMPFMT = '%Y%m%d%H%M%S +0100'
 EPGEXPIREDAYS   = 5
+CONNECT_TIMEOUT = 10  # default is 5 seconds
 
 def _log(msg):
     print('%s: %s' % ('db', msg))
     
-def _db_try_readonly(cursor):
-    cursor.execute('PRAGMA journal_mode = OFF')
-    cursor.execute('PRAGMA synchronous = OFF')
+def _db_set_connproperty(cursor):
+    cursor.execute('PRAGMA journal_mode = WAL')
     cursor.execute('PRAGMA read_uncommitted = True')
     
 def create_db():
@@ -60,7 +60,7 @@ def create_db():
             if not os.path.exists(datadir):
                 os.mkdir(datadir)
             if not os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
                 # database parameters
                 cursor.execute('PRAGMA encoding = %s' % escape_string('UTF-8'))
@@ -170,7 +170,7 @@ def db_update():
     try:
         try:
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
                 cursor.execute("SELECT paramvalue FROM tblparams WHERE paramname='DBVERSION'")
                 row = cursor.fetchone()
@@ -210,7 +210,7 @@ def db_update_version_1(dbversion):
     try:
         try:
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
                 # ALTER TABLE CHANNELS
                 cursor.execute('ALTER TABLE tblchannels ADD COLUMN shortname TEXT')
@@ -246,7 +246,7 @@ def db_update_version_2(dbversion):
     try:
         try:
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
                 # ALTER TABLE CHANNELS
                 cursor.execute('ALTER TABLE tblchannels ADD COLUMN icon TEXT')
@@ -276,9 +276,9 @@ def read_adapters():
         try:
             adapters = list()
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
-                _db_try_readonly(cursor)
+                _db_set_connproperty(cursor)
                 cursor.execute('SELECT adapterindex,adaptername,adaptertype,freqmin,freqmax FROM tbladapters \
                                 ORDER BY adapterindex')
                 for row in cursor:
@@ -302,9 +302,9 @@ def adapters_count():
         try:
             adapters = list()
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
-                _db_try_readonly(cursor)
+                _db_set_connproperty(cursor)
                 cursor.execute('SELECT COUNT(*) FROM tbladapters')
                 row = cursor.fetchone()
                 if row <> None:
@@ -326,8 +326,9 @@ def add_adapter(index,name,type,freqmin,freqmax):
         try:
             res = False
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
+                _db_set_connproperty(cursor)
                 v = (name,index,type)
                 cursor.execute('SELECT * FROM tbladapters WHERE adaptername=? AND adapterindex=? AND adaptertype=?',v)
                 row = cursor.fetchone()
@@ -350,31 +351,32 @@ def add_adapter(index,name,type,freqmin,freqmax):
     return res
     
 def drop_channels(adapter):
-	"""
-	Clear channels table
-	"""
-	global databasefile
-	connection = None
-	res = False
-	try:
-		try:
-			if os.path.exists(databasefile):
-				connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
-				cursor = connection.cursor()
-				v = (adapter,)
-				cursor.execute('DELETE FROM tblChannels WHERE adapter=?',v)
-				cursor.close()
-				connection.commit()
-			res = True
-		except:
-			_log(">>>>> drop_channels() error:")
-			_log(str(sys.exc_info()[0].__name__) + ': ' + str(sys.exc_info()[1]))
-			res = False
-	finally:
-		if connection <> None:
-			connection.close()
-		    
-	return res
+    """
+    Clear channels table
+    """
+    global databasefile
+    connection = None
+    res = False
+    try:
+    	try:
+            if os.path.exists(databasefile):
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
+                cursor = connection.cursor()
+                _db_set_connproperty(cursor)
+                v = (adapter,)
+                cursor.execute('DELETE FROM tblChannels WHERE adapter=?',v)
+                cursor.close()
+                connection.commit()
+    		res = True
+    	except:
+    		_log(">>>>> drop_channels() error:")
+    		_log(str(sys.exc_info()[0].__name__) + ': ' + str(sys.exc_info()[1]))
+    		res = False
+    finally:
+    	if connection <> None:
+    		connection.close()
+    	    
+    return res
 
 def read_channels(adapter):
     global databasefile
@@ -384,9 +386,9 @@ def read_channels(adapter):
     	try:
     	    channels = list()
     	    if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
-                _db_try_readonly(cursor)
+                _db_set_connproperty(cursor)
                 v = (adapter,)
                 cursor.execute('SELECT channelid,orderid,programid,channelname,frequency,bandwidth,channelhash \
                             FROM tblchannels \
@@ -435,9 +437,9 @@ def read_channel_by_id(adapter,channelid):
     try:
         try:
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
-                _db_try_readonly(cursor)
+                _db_set_connproperty(cursor)
                 v = (channelid,)
                 cursor.execute('SELECT channelid,orderid,programid,channelname,frequency,bandwidth,channelhash \
                                 FROM tblchannels \
@@ -498,10 +500,10 @@ def read_epg_now(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     connection.row_factory = sqlite.Row
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,dt,)
                     cursor.execute('SELECT title, \
@@ -541,6 +543,7 @@ def read_epg_now(channelhash):
         except:
             _log(">>>>> read_epg_now() error:")
             _log(str(sys.exc_info()[0].__name__) + ': ' + str(sys.exc_info()[1]))
+            goon = False
     finally:
         if connection <> None:
             connection.close()
@@ -555,10 +558,10 @@ def read_epg_next(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     connection.row_factory = sqlite.Row
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,)
                     cursor.execute('SELECT title, \
@@ -612,9 +615,9 @@ def read_epg_nowtitle(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,dt,)
                     cursor.execute('SELECT title \
@@ -644,9 +647,9 @@ def read_epg_nexttitle(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = (datetime.now()).strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,)
                     cursor.execute('SELECT title \
@@ -675,9 +678,9 @@ def read_epg_nextstarttime(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = (datetime.now()).strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,)
                     cursor.execute('SELECT datetimestart \
@@ -708,9 +711,9 @@ def read_epg_nowdescription(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,dt,)
                     cursor.execute('SELECT description \
@@ -740,9 +743,9 @@ def read_epg_nowstarttime(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,dt,)
                     cursor.execute('SELECT datetimestart \
@@ -773,9 +776,9 @@ def read_epg_nowduration(channelhash):
             res = ''
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,dt,)
                     cursor.execute('SELECT datetimestart,datetimeend \
@@ -807,9 +810,9 @@ def read_epg_nowyear(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,dt,)
                     cursor.execute('SELECT year \
@@ -839,9 +842,9 @@ def read_epg_nowsubtitle(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,dt,)
                     cursor.execute('SELECT subtitle \
@@ -872,9 +875,9 @@ def read_epg_nowfanart(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,dt,)
                     cursor.execute('SELECT fanarturl \
@@ -904,9 +907,9 @@ def read_epg_nowposter(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,dt,)
                     cursor.execute('SELECT posterurl \
@@ -936,9 +939,9 @@ def read_epg_nowgenre(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,dt,)
                     cursor.execute('SELECT category \
@@ -968,9 +971,9 @@ def read_epg_nowactors(channelhash):
         try:
             if channelhash <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelhash,dt,dt,)
                     cursor.execute('SELECT actors \
@@ -982,7 +985,9 @@ def read_epg_nowactors(channelhash):
                     row = cursor.fetchone()
                     if row <> None:
                         if row[0] <> None:
-                            res = row[0].split('|')
+                            _actors = row[0].split('|')
+                            for a in _actors:
+                                res.append(a)
                     cursor.close()
         except:
             _log(">>>>> read_epg_nowactors() error:")
@@ -1000,9 +1005,9 @@ def last_epg_datestarttime():
     try:
         try:
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
-                _db_try_readonly(cursor)
+                _db_set_connproperty(cursor)
                 cursor.execute('SELECT MAX(datetimestart) FROM tblepg')
                 row = cursor.fetchone()
                 if row[0] <> None:
@@ -1027,9 +1032,9 @@ def read_channel_icon(channelid):
         try:
             if channelid <> None:
                 if os.path.exists(databasefile):
-                    connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                    connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                     cursor = connection.cursor()
-                    _db_try_readonly(cursor)
+                    _db_set_connproperty(cursor)
                     dt = datetime.now().strftime(EPGTIMESTAMPFMT)
                     v = (channelid,)
                     cursor.execute('SELECT icon \
@@ -1056,9 +1061,9 @@ def count_channels(adapter):
     try:
         try:
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
-                _db_try_readonly(cursor)
+                _db_set_connproperty(cursor)
                 v = (adapter,)
                 cursor.execute('SELECT COUNT(*) \
                                 FROM tblchannels \
@@ -1084,8 +1089,9 @@ def add_channel(adapter,order,programid,channelname,frequency,bandwidth,shortnam
     try:
         try:
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
+                _db_set_connproperty(cursor)
                 v = (adapter,order,programid,channelname,frequency,bandwidth,hashlib.md5(channelname).hexdigest(),shortname)
                 cursor.execute('INSERT INTO tblchannels \
                                 (adapter,orderid,programid,channelname,frequency,bandwidth,channelhash,shortname) \
@@ -1110,8 +1116,9 @@ def del_channel(adapter,programid):
     try:
         try:
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
+                _db_set_connproperty(cursor)
                 v = (adapter,programid,)
                 cursor.execute('DELETE FROM tblchannels \
                                 WHERE adapter=? and programid=?', v)
@@ -1134,7 +1141,7 @@ def del_channel_by_id(channelid):
     try:
         try:
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
                 v = (channelid,)
                 cursor.execute('DELETE FROM tblchannels \
@@ -1158,8 +1165,9 @@ def purge_expired_epg():
     try:
         try:
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
+                _db_set_connproperty(cursor)
                 dt = (datetime.now()-timedelta(days=EPGEXPIREDAYS)).strftime(EPGTIMESTAMPFMT) 
                 v = (dt,)
                 cursor.execute('DELETE FROM tblepg \
@@ -1184,8 +1192,9 @@ def add_epg_data(channelname,datetimestart,datetimeend='',category='',title='',s
         try:
             update_epg = False
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
+                _db_set_connproperty(cursor)
                 v = (channelname,)
                 cursor.execute('SELECT channelhash \
                                 FROM tblepglink \
@@ -1237,8 +1246,9 @@ def add_epg_link(epgkey='',channelprefix='',fname=''):
         try:
             update = False
             if os.path.exists(databasefile) and len(channelprefix)>2:
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
+                _db_set_connproperty(cursor)
                 channelprefix += '%'
                 v = (channelprefix,)
                 cursor.execute('SELECT channelhash,LENGTH(shortname) FROM tblchannels WHERE shortname LIKE ? ORDER BY LENGTH(shortname)',v)
@@ -1285,9 +1295,9 @@ def count_epg_links():
     try:
         try:
             if os.path.exists(databasefile):
-                connection = sqlite.connect(databasefile, isolation_level='IMMEDIATE')
+                connection = sqlite.connect(databasefile, isolation_level=None, timeout=CONNECT_TIMEOUT)
                 cursor = connection.cursor()
-                _db_try_readonly(cursor)
+                _db_set_connproperty(cursor)
                 cursor.execute('SELECT COUNT(*) \
                                 FROM tblepglink')
                 row = cursor.fetchone()

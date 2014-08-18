@@ -31,54 +31,57 @@ import unicodedata
 DEFAULT_ENCODING = locale.getpreferredencoding()
 
 
-def decodestr(s):
+def decodestring(s):
     try:
         u_s = unicode(s)
-        ret = unicodedata.normalize('NFKD',u_s).encode('ascii','ignore')
+        ret = unicodedata.normalize('NFKD', u_s).encode('ascii', 'ignore')
     except UnicodeError:
         ret = u''
     else:
         pass
     finally:
         pass
-    
+
     return ret
+
 
 def try_parse_int(strinp, res=0):
     try:
         return int(strinp)
     except Exception:
-        return res        
+        return res
 
-def download(url='',filepath=''):
-    outf=None
+
+def download(url='', filepath=''):
+    outf = None
     try:
         res = False
         try:
             # Get the channel icon file from Internet
-            if url <> '':
+            if url != '':
                 rfile = urllib2.urlopen(url)
-                outf = open(filepath,'wb')
+                outf = open(filepath, 'wb')
                 outf.write(rfile.read())
                 res = True
         except:
-            Exception('Download fail: '+url)
+            Exception('Download fail: ' + url)
             raise
     finally:
-        if outf <> None:
+        if outf is not None:
             outf.close()
-            
+
 
 def get_country():
     ret = ''
     try:
         # get country language code
         ret = locale.getdefaultlocale()[0].split('_')[1]
-    except:        
+    except:
         pass
     return ret
 
-def check_pid(pid):        
+
+def check_pid(pid):
     """ Check For the existence of a unix pid. """
     try:
         os.kill(pid, 0)
@@ -87,6 +90,7 @@ def check_pid(pid):
     else:
         return True
 
+
 def purge_string(str):
     strout = str.replace(' ', '').replace('-', '').replace('&', '').replace('.', '').replace("'", '').replace('@', '')
-    return strout.replace('#','').replace(':', '').replace(',', '').replace('!', '')    
+    return strout.replace('#', '').replace(':', '').replace(',', '').replace('!', '')

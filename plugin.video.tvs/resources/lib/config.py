@@ -29,7 +29,7 @@ import tvdata
 import codecs
 from xbmcutil import *
 import db
-from util import get_country, DEFAULT_ENCODING, purge_string, decodestr
+from util import get_country, DEFAULT_ENCODING, purge_string, decodestring
 from xbmcswift2 import Plugin
 
 
@@ -139,7 +139,7 @@ class DvbConfig:
                                 m = line.strip().split(':')
                                 if m and len(m) >= 12:
                                     plugin.log.debug('dvb find chname')
-                                    _chname = decodestr(m[CH_NAME])
+                                    _chname = decodestring(m[CH_NAME])
                                     mc = channel_re.search(_chname)
                                     if mc <> None:
                                         _chname = mc.group(1).strip()

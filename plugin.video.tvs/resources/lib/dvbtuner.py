@@ -30,7 +30,7 @@ import shlex
 import xbmcaddon
 import xbmcgui
 import db
-from util import DEFAULT_ENCODING, get_country, decodestr
+from util import DEFAULT_ENCODING, get_country, decodestring
 from resources.lib import xbmcutil
 from xbmcswift2 import Plugin
 
@@ -268,7 +268,7 @@ def find_service(r):
     if r <> None:
         m = re_service.search(r)
         if m <> None:
-            channel = decodestr(m.group(1))
+            channel = decodestring(m.group(1))
     return channel
 
 def find_channel(r):

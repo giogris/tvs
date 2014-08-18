@@ -56,7 +56,7 @@ class TVChannel(object):
         self.v_nowduration  = ''
         self.v_nowyear      = ''
         self.v_nowsubtitle  = ''
-        self.v_nowactors    = ''
+        self.v_nowactors    = []
         self.v_nowfanart    = ''
         self.v_nowposter    = ''
         self.v_nowdate      = ''

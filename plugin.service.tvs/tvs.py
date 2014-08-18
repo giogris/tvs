@@ -21,21 +21,14 @@
 
 import os
 import sys
-import syslog
-import xbmc
-import xbmcaddon
 import string
-import traceback
 import threading
-import getopt
 import subprocess
-import select
 import signal
 import time
-import re
 import shlex
-import atexit
-import tvdata
+
+import xbmc
 import db
 from util import get_country, check_pid
 from resources.lib import epg
@@ -43,14 +36,15 @@ from resources.lib import pvr
 from resources.lib import dvb_t
 from xbmcswift2 import Plugin
 
+
 PLUGIN_NAME = 'TV Script Streaming Service'
 PLUGIN_SERVICE_ID = 'plugin.service.tvs'
 PLUGIN_ID = 'plugin.video.tvs'
 plugin = Plugin(PLUGIN_NAME, PLUGIN_SERVICE_ID, __file__)
 
-__version__     = plugin.addon.getAddonInfo('version')
-__rootdir__     = plugin.addon.getAddonInfo('path')
-__doc__	        = '''
+__version__ = plugin.addon.getAddonInfo('version')
+__rootdir__ = plugin.addon.getAddonInfo('path')
+__doc__ = '''
 Tvs is simple XBMC script for viewing DVB-TV (now DVB-T e then DVB-S and DVB-C).
 It consists of 2 parts:
 1) a main process which launch the vlc backend streaming daemon, capture the recording
@@ -59,11 +53,12 @@ rquest from the frontend and request and store EPG data from EPG data sources
 '''
 
 STRINGS = {
-    'no_adapters_found':            30100,
-    'unable_to_create_data_dir':    30101,
-    'unable_to_create_database':    30102,
-    'unable_to_register_adapters':  30103
+    'no_adapters_found': 30100,
+    'unable_to_create_data_dir': 30101,
+    'unable_to_create_database': 30102,
+    'unable_to_register_adapters': 30103
 }
+
 
 # Translation macro
 def _translate(string):
@@ -71,26 +66,26 @@ def _translate(string):
         return plugin.get_string(STRINGS[string])
     else:
         return string
-    
+
 # to be modified for Windows
 # get the addon path
-datadir = os.path.join(xbmc.translatePath('special://masterprofile'),'addon_data',PLUGIN_ID)
-databasepath = os.path.join(datadir,'tvs.db')
+datadir = os.path.join(xbmc.translatePath('special://masterprofile'), 'addon_data', PLUGIN_ID)
+databasepath = os.path.join(datadir, 'tvs.db')
 
 RR_PERIOD = 10
 THREAD_POLLING = 30
 VLC_TELNET_PORT = 4212
 VLC_HTTP_PORT = 9000
 VLC = '/usr/bin/vlc-wrapper'
-TVS_PID_FILE = os.path.join(datadir,'tvs.pid')
+TVS_PID_FILE = os.path.join(datadir, 'tvs.pid')
 DEFAULT_ENCODING = 'latin-1'
 
+
 class Tvs(threading.Thread):
-    
     vlcpid = None
     vlock = threading.Lock()
-    
-    def __init__(self,adapterslist=None):
+
+    def __init__(self, adapterslist=None):
         threading.Thread.__init__(self)
         plugin.log.debug('main service __init__')
         self.name = 'tvs service'
@@ -111,45 +106,49 @@ class Tvs(threading.Thread):
         self.pvr = pvr.Pvr(__rootdir__)
         self.pvr.start()
         isalive = True
-        while not xbmc.abortRequested and isalive and not self.stopped():
+        plugin.log.debug('xbmc.abortRequested %s' % str(xbmc.abortRequested))
+        plugin.log.debug('isalive %s' % str(isalive))
+        plugin.log.debug('stopped %s' % str(self.stopped))
+        while not xbmc.abortRequested and isalive and not self.stopped:
             time.sleep(RR_PERIOD)
             isalive = False
             for proc in self.vlcprocs:
-	            if proc.poll() == None:
-		            # one vlc streaming process is alive, don't exit
-		            isalive = True
+                if proc.poll() is None:
+                    # one vlc streaming process is alive, don't exit
+                    isalive = True
             if not isalive:
-	            # exit from main daemon
-	            plugin.log.info('main service is in exit state...')
+                # exit from main daemon
+                plugin.log.info('main service is in exit state...')
         # ...exit, so die!
-        if not self.stopped(): self.stop()
+        if not self.stopped: self.stop()
         # cleanup
         self.cleanup()
 
     def stop(self):
         self._stop.set()
 
+    @property
     def stopped(self):
         return self._stop.isSet()
-        
+
     def cleanup(self):
         # clean up vlc streaming processes
         plugin.log.info('main service cleaning-up processes.')
-        if self <> None:
+        if self is not None:
             for proc in self.vlcprocs:
                 if check_pid(proc.pid):
                     plugin.log.info('kill vlc service pid %d' % proc.pid)
-                    os.kill(proc.pid,signal.SIGKILL)
+                    os.kill(proc.pid, signal.SIGKILL)
             # clean up xmltv process
-            if self.epg <> None:
+            if self.epg is not None:
                 if self.epg.is_alive():
                     plugin.log.info('kill epg service pid %d' % self.epg.pid)
-                    os.kill(self.epg.pid,signal.SIGKILL)
+                    os.kill(self.epg.pid, signal.SIGKILL)
             # clean up recorder process
-            if self.pvr <> None:
+            if self.pvr is not None:
                 if self.pvr.is_alive():
                     plugin.log.info('kill pvr service pid %d' % self.pvr.pid)
-                    os.kill(self.pvr.pid,signal.SIGKILL)	
+                    os.kill(self.pvr.pid, signal.SIGKILL)
 
     def vlc_streamer(self):
         proc = None
@@ -158,7 +157,7 @@ class Tvs(threading.Thread):
             self.stop()
         try:
             try:
-                if self.adapterslist <> None:
+                if self.adapterslist is not None:
                     for adapter in self.adapterslist:
                         # --verbose 0 --quiet --daemon --file-loggin --no-ipv6 --ttl 12 --no-show-intf --no-interact --rt-priority --no-stats -I telnet
                         command = VLC
@@ -170,36 +169,36 @@ class Tvs(threading.Thread):
                         command = string.join([command, '--syslog'], ' ')
                         command = string.join([command, '--intf telnet'], ' ')
                         command = string.join([command, ('--telnet-port %d' % (VLC_TELNET_PORT))], ' ')
-                        plugin.log.info('vlc streaming on adapter %d start using command %s' % (adapter[1],command))
+                        plugin.log.info('vlc streaming on adapter %d start using command %s' % (adapter[1], command))
                         cmd = shlex.split(command)
-                        proc = subprocess.Popen(cmd,shell=False,bufsize=-1,
-                        						stdin=None,
-                        						stdout=None,
-                        						stderr=None, close_fds=True)
+                        proc = subprocess.Popen(cmd, shell=False, bufsize=-1,
+                                                stdin=None,
+                                                stdout=None,
+                                                stderr=None, close_fds=True)
                         self.vlock.acquire()
                         self.vlcprocs.append(proc)
                         self.vlock.release()
             except:
                 plugin.log.error('>>>>> vlc_streamer() error:')
                 plugin.log.error(str(sys.exc_info()[0].__name__) + ': ' + str(sys.exc_info()[1]))
-    
-        finally:        
-            pass	    	
+
+        finally:
+            pass
+
 
 def initialize():
-    
     if not os.path.exists(datadir):
         plugin.log.debug(('main service make datadir %s' % datadir))
         os.mkdir(datadir)
-        os.chmod(datadir,0777)
+        os.chmod(datadir, 0777)
         if not os.path.exists(datadir):
-            plugin.notify(_translate('unable_to_create_data_dir')+' '+datadir)
+            plugin.notify(_translate('unable_to_create_data_dir') + ' ' + datadir)
             return None
-	
+
     plugin.log.debug('main service discover_adapters')
     adapterslist = dvb_t.discover_dvbadapters()
     plugin.log.debug('main service out ---- discover_adapters')
-    
+
     if len(adapterslist) == 0:
         plugin.notify(_translate('no_adapters_found'))
 
@@ -207,38 +206,41 @@ def initialize():
     plugin.log.debug(('main service create_db(%s)' % databasepath))
     if db.create_db():
         plugin.log.info('TVS database: %s created' % databasepath)
-        os.chmod(databasepath,0766)
+        os.chmod(databasepath, 0766)
         # add new adapters    
         for a in adapterslist:
             plugin.log.info(('register adapter %s' % a[0]))
-            if not db.add_adapter(a[1],a[0],a[2],a[3],a[4]):
-                plugin.notify(_translate('unable_to_register_adapters')+' '+databasepath)
+            if not db.add_adapter(a[1], a[0], a[2], a[3], a[4]):
+                plugin.notify(_translate('unable_to_register_adapters') + ' ' + databasepath)
                 return None
-            
+
         if db.adapters_count() == 0:
             plugin.notify(_translate('no_adapters_found'))
             return None
     else:
-        plugin.notify(_translate('unable_to_create_database')+' '+databasepath)
+        plugin.notify(_translate('unable_to_create_database') + ' ' + databasepath)
         return None
 
     adapterslist = db.read_adapters()
-    
+
     return adapterslist
 
-def do_the_job():	
+
+def do_the_job():
     try:
         tvs = None
         adapterslist = initialize()
-        if adapterslist <> None:
+        if adapterslist is not None:
+            # create main tvs thread
             # create main tvs thread
             tvs = Tvs(adapterslist)
-            # starting
             plugin.log.info('main service start with pid %d' % tvs.pid)
             tvs.start()
+            plugin.log.debug('>>>> After create TVS thread...')
             # wait until the end
             while tvs.is_alive() and not xbmc.abortRequested:
                 tvs.join(THREAD_POLLING)
+            plugin.log.debug('>>>> Before cleanup....')
             tvs.cleanup()
         else:
             plugin.log.error('main service initialization failed.')
@@ -249,19 +251,18 @@ def do_the_job():
         plugin.log.error(str(sys.exc_info()[0].__name__) + ': ' + str(sys.exc_info()[1]))
 
     finally:
-        plugin.log.info('stop!') 
-        if tvs <> None:
-            if not tvs.stopped():
+        plugin.log.info('stop!')
+        if tvs is not None:
+            if not tvs.stopped:
                 tvs.stop()
                 tvs.cleanup()
 
 
 def autostart():
-    tvs = None
-    try:          
+    try:
         plugin.log.info('starting main service...')
         do_the_job()
-        plugin.log.info('exit main service!')	
+        plugin.log.info('exit main service!')
     except:
         plugin.log.error(str(sys.exc_info()[0].__name__) + ': ' + str(sys.exc_info()[1]))
 

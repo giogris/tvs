@@ -23,7 +23,7 @@ import sys
 import os
 import re
 import telnetlib
-from util import get_country, DEFAULT_ENCODING, purge_string, decodestr
+from util import get_country, DEFAULT_ENCODING, purge_string, decodestring
 from xbmcswift2 import Plugin
 
 #__all__ = ['VlcController']

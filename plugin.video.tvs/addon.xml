@@ -8,7 +8,7 @@
   <extension point="xbmc.python.pluginsource" library="addon.py">     
      <provides>video</provides>
   </extension>
-  <extension point="xbmc.addon.metadata">
+  <extension point="xbmc.addon.metadata" debugging="true" >
     <platform>linux</platform>
     <language>it</language>
     <summary>Tv Script</summary>

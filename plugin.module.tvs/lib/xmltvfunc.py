@@ -23,7 +23,7 @@ import os
 import sys
 from xml.dom import minidom
 import xbmc
-from util import DEFAULT_ENCODING, get_country, decodestr
+from util import DEFAULT_ENCODING, get_country, decodestring
 
 #__all__ = ['channel_ids']
 
@@ -40,14 +40,14 @@ def channel_ids(channelids=''):
                 for channel in channels:
                     try:
                         # take the channel id and link name
-                        id = decodestr(channel.getAttribute('id'))
+                        id = decodestring(channel.getAttribute('id'))
                         linkname = ''
                         for node in channel.childNodes:
                             if node.nodeType == channel.ELEMENT_NODE and node.hasChildNodes and linkname == '':
                                 if node.nodeName == 'display-name' and node.hasChildNodes:
                                     for nc in node.childNodes:
                                         if nc.nodeType == channel.TEXT_NODE:
-                                            linkname += decodestr(nc.nodeValue)
+                                            linkname += decodestring(nc.nodeValue)
                                     # found the first display-name and so exit loop
                                     break
                         xmltvchannels[linkname] = id
@@ -58,7 +58,7 @@ def channel_ids(channelids=''):
                 logtvs(">>>>> channel_ids() error:", xbmc.LOGERROR)
                 logtvs(str(sys.exc_info()[0].__name__) + ': ' + str(sys.exc_info()[1]),xbmc.LOGERROR)
         finally:
-            if doc <> None:
+            if doc is not None:
                 doc.unlink()
                 
     return xmltvchannels
